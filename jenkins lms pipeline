@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    environment {
+    
+        BUILD_DIR = "build"
+    }
+
+    stages {
+        
+        stage('Build') {
+            steps {
+                
+                sh 'mkdir -p ${BUILD_DIR}'
+                
+                
+                sh 'cd ${BUILD_DIR} && cmake .. && make'
+            }
+        }
+
+       
+        stage('Run Tests') {
+            steps {
+               
+                sh 'cd ${BUILD_DIR} && ./runTests'
+            }
+        }
+        stage('Deploy to Development') {
+            steps {
+              
+                sh """
+                ssh user@dev-server 'cd /path/to/lms && git pull origin main && ./deployLMS'
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+           
+            cleanWs()
+        }
+        success {
+            echo 'Build and deployment succeeded!'
+        }
+        failure {
+            echo 'Build or deployment failed!'
+        }
+    }
+}
